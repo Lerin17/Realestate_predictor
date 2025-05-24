@@ -29,7 +29,7 @@ options.add_argument("--disable-blink-features=AutomationControlled")  # Bypass 
 
 data = []
 
-for page in range(0, 6):  # Scrape first 5 pages
+for page in range(0, 3):  # Scrape first 5 pages
     print(f"Scraping page {page}...")
 
     
@@ -46,34 +46,51 @@ for page in range(0, 6):  # Scrape first 5 pages
         driver.get(url)
          # Use Selenium to get the page source
         # driver.get(url)
-        time.sleep(3)  # Wait for the page to load
+        time.sleep(7)  # Wait for the page to load
          # response = requests.get(url, headers=headers)  
     # if response.status_code != 200:
     #     print(f"Failed to retrieve page {page}", response.status_code)
     #     continue
 
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        listings = soup.find_all("div", class_="property-listing")  # Listing block
         
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        print(soup.prettify()[:3000])
+        # container = soup.find("div", class_="container") 
+        # print("Container found:", container is not None, flush=True)
+        # print(container.prettify()[:1000])
+        #  # Main container for listings
+        listings = soup.find_all("div", class_="property-listing-grid")  # Listing block
+        
+        print(len(listings), "listings found on page", page, flush=True)
     # ("div", class_="property-info").find("span", class_="price")
 
-        for listing in listings:
-            try:
-                title = listing.find("div", class_="pl-title").find("h3").text.strip()
-                location = listing.find("address").find("p").text.strip()
-                price = listing.find("div", class_="pl-price").find("h3", class_ ="").text.strip().replace("₦", "").replace(",", "")
-                bedrooms = listing.find("div", class_="pl-price").find()("h6", class_ ="")
-                # price = listing.find("div", class_="pl-price").text.strip().replace("₦", "").replace(",", "")
-                # beds = listing.find("ul", class_="listings-property-info").find_all("li")[0].text.strip()
-                data.append({
-                    "Title": title,
-                    "Location": location,
-                    "Price (NGN)": price,
-                    "Bedrooms": bedrooms
-                })
 
-            except AttributeError:
-                continue  # Skip listings with missing fields
+
+
+        # for listing in listings:
+        #     print("Scraping listing... ", flush=True)
+        #     try:
+        #         title = listing.find("div", class_="pl-title").find("h3").text.strip()              
+        #         print(title, 'title', flush=True)
+        #         location = listing.find("address").find("p").text.strip()
+        #         price = listing.find("div", class_="pl-price").find("h3", class_ ="").text.strip().replace("₦", "").replace(",", "")
+        #         bedrooms = listing.find("div", class_="pl-price").find("h6", class_ ="")
+        #         # price = listing.find("div", class_="pl-price").text.strip().replace("₦", "").replace(",", "")
+        #         # beds = listing.find("ul", class_="listings-property-info").find_all("li")[0].text.strip()
+
+
+        #         data.append({
+        #             "Title": title,
+        #             "Location": location,
+        #             "Price (NGN)": price,
+        #             "Bedrooms": bedrooms
+        #         })             
+        #         print(f"Total listings scraped: {len(data)}",  flush=True)
+
+
+        #     except AttributeError:
+        #         continue  # Skip listings with missing fields
+            
             
             
         
@@ -91,6 +108,5 @@ for page in range(0, 6):  # Scrape first 5 pages
             df = pd.DataFrame(data)
 
 # Save to CSV
-            df.to_csv("lagos_properties.csv", index=False)
-
-            print("Scraping complete. Data saved to 'lagos_properties.csv'")
+df.to_csv("data/lagos_properties.csv", index=False)
+print("Scraping complete. Data saved to 'data/lagos_properties.csv'")
