@@ -26,61 +26,71 @@ options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-blink-features=AutomationControlled")  # Bypass detection
 
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 data = []
 
 for page in range(0, 6):  # Scrape first 5 pages
     print(f"Scraping page {page}...")
 
+    
+
+
     if(page == 0):
         url = "https://propertypro.ng/property-for-sale/in/lagos="
     else : 
         url = base_url + str(page)
-
-    # Use Selenium to get the page source
-    driver.get(url)
-    time.sleep(3)  # Wait for the page to load
-    # response = requests.get(url, headers=headers)
     
-   
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-
+    try:
+        driver.get(url)
+         # Use Selenium to get the page source
+        # driver.get(url)
+        time.sleep(3)  # Wait for the page to load
+         # response = requests.get(url, headers=headers)  
     # if response.status_code != 200:
     #     print(f"Failed to retrieve page {page}", response.status_code)
     #     continue
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    listings = soup.find_all("div", class_="property-listing")  # Listing block
-    
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        listings = soup.find_all("div", class_="property-listing")  # Listing block
+        
     # ("div", class_="property-info").find("span", class_="price")
 
-    for listing in listings:
-        try:
-            title = listing.find("div", class_="pl-title").find("h3").text.strip()
-            location = listing.find("address").find("p").text.strip()
-            price = listing.find("div", class_="pl-price").find("h3", class_ ="").text.strip().replace("₦", "").replace(",", "")
-            bedrooms = listing.find("div", class_="pl-price").find()("h6", class_ ="")
-            # price = listing.find("div", class_="pl-price").text.strip().replace("₦", "").replace(",", "")
-            # beds = listing.find("ul", class_="listings-property-info").find_all("li")[0].text.strip()
-        except AttributeError:
-            continue  # Skip listings with missing fields
+        for listing in listings:
+            try:
+                title = listing.find("div", class_="pl-title").find("h3").text.strip()
+                location = listing.find("address").find("p").text.strip()
+                price = listing.find("div", class_="pl-price").find("h3", class_ ="").text.strip().replace("₦", "").replace(",", "")
+                bedrooms = listing.find("div", class_="pl-price").find()("h6", class_ ="")
+                # price = listing.find("div", class_="pl-price").text.strip().replace("₦", "").replace(",", "")
+                # beds = listing.find("ul", class_="listings-property-info").find_all("li")[0].text.strip()
+                data.append({
+                    "Title": title,
+                    "Location": location,
+                    "Price (NGN)": price,
+                    "Bedrooms": bedrooms
+                })
+
+            except AttributeError:
+                continue  # Skip listings with missing fields
+            
+            
         
-        data.append({
-            "Title": title,
-            "Location": location,
-            "Price (NGN)": price,
-            "Bedrooms": bedrooms
-        })
-    
-    time.sleep(2)  # Be nice to the server
+    finally:
+            time.sleep(2)  # Be nice to the server
 
-    driver.quit()
+            
 
-# Convert to DataFrame
-df = pd.DataFrame(data)
+            driver.delete_all_cookies()
+
+           
+            driver.quit()
+
+        # Convert to DataFrame
+            df = pd.DataFrame(data)
 
 # Save to CSV
-df.to_csv("lagos_properties.csv", index=False)
+            df.to_csv("lagos_properties.csv", index=False)
 
-print("Scraping complete. Data saved to 'lagos_properties.csv'")
+            print("Scraping complete. Data saved to 'lagos_properties.csv'")
