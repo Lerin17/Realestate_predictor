@@ -2,11 +2,15 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
+import undetected_chromedriver as uc
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-# from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+
 
 base_url = "https://propertypro.ng/property-for-sale/in/lagos?page="
 
@@ -19,12 +23,12 @@ base_url = "https://propertypro.ng/property-for-sale/in/lagos?page="
 #     "Connection": "keep-alive"
 # }
 
-options = webdriver.ChromeOptions()
+options = uc.ChromeOptions()
 options.add_argument("--headless")  # Optional: remove this line if you want to see the browser
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-blink-features=AutomationControlled")  # Bypass detection
-
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
 
 
 data = []
@@ -40,13 +44,29 @@ for page in range(0, 3):  # Scrape first 5 pages
     else : 
         url = base_url + str(page)
     
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver = uc.Chrome(options=options)
 
     try:
         driver.get(url)
          # Use Selenium to get the page source
         # driver.get(url)
-        time.sleep(7)  # Wait for the page to load
+
+        with open(f"page_{page}_dump.html", "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+
+
+        WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "property-listing")))
+
+
+        for _ in range(5):
+            driver.execute_script("window.scrollBy(0, window.innerHeight);")
+            time.sleep(1.5)
+        # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        # time.sleep(3)
+
+        # time.sleep(7) 
+        #  # Wait for the page to load
          # response = requests.get(url, headers=headers)  
     # if response.status_code != 200:
     #     print(f"Failed to retrieve page {page}", response.status_code)
@@ -59,7 +79,7 @@ for page in range(0, 3):  # Scrape first 5 pages
         # print("Container found:", container is not None, flush=True)
         # print(container.prettify()[:1000])
         #  # Main container for listings
-        listings = soup.find_all("div", class_="property-listing-grid")  # Listing block
+        listings = soup.find_all("div", class_="property-listing")  # Listing block
         
         print(len(listings), "listings found on page", page, flush=True)
     # ("div", class_="property-info").find("span", class_="price")
